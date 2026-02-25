@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace KeyPressReplay.Input;
@@ -9,6 +10,8 @@ namespace KeyPressReplay.Input;
 internal static class NativeInput
 {
     // --- SendInput structures ---
+    // The union must include all three input types (MOUSEINPUT, KEYBDINPUT, HARDWAREINPUT)
+    // so that Marshal.SizeOf<INPUT>() returns the correct size that SendInput expects.
 
     [StructLayout(LayoutKind.Sequential)]
     public struct INPUT
@@ -20,7 +23,20 @@ internal static class NativeInput
     [StructLayout(LayoutKind.Explicit)]
     public struct INPUTUNION
     {
+        [FieldOffset(0)] public MOUSEINPUT mi;
         [FieldOffset(0)] public KEYBDINPUT ki;
+        [FieldOffset(0)] public HARDWAREINPUT hi;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MOUSEINPUT
+    {
+        public int dx;
+        public int dy;
+        public uint mouseData;
+        public uint dwFlags;
+        public uint time;
+        public IntPtr dwExtraInfo;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -31,6 +47,14 @@ internal static class NativeInput
         public uint dwFlags;
         public uint time;
         public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HARDWAREINPUT
+    {
+        public uint uMsg;
+        public ushort wParamL;
+        public ushort wParamH;
     }
 
     public const uint INPUT_KEYBOARD = 1;
@@ -56,7 +80,9 @@ internal static class NativeInput
         inputs[1].union.ki.wVk = vkCode;
         inputs[1].union.ki.dwFlags = KEYEVENTF_KEYUP;
 
-        SendInput(2, inputs, Marshal.SizeOf<INPUT>());
+        uint sent = SendInput(2, inputs, Marshal.SizeOf<INPUT>());
+        if (sent != 2)
+            Console.Error.WriteLine($"  [WARN] SendInput returned {sent}/2 — Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}");
     }
 
     /// <summary>
@@ -68,7 +94,10 @@ internal static class NativeInput
         inputs[0].type = INPUT_KEYBOARD;
         inputs[0].union.ki.wVk = vkCode;
         inputs[0].union.ki.dwFlags = 0;
-        SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+
+        uint sent = SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+        if (sent != 1)
+            Console.Error.WriteLine($"  [WARN] SendKeyDown returned {sent}/1 — Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}");
     }
 
     /// <summary>
@@ -80,6 +109,9 @@ internal static class NativeInput
         inputs[0].type = INPUT_KEYBOARD;
         inputs[0].union.ki.wVk = vkCode;
         inputs[0].union.ki.dwFlags = KEYEVENTF_KEYUP;
-        SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+
+        uint sent = SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+        if (sent != 1)
+            Console.Error.WriteLine($"  [WARN] SendKeyUp returned {sent}/1 — Error: {new Win32Exception(Marshal.GetLastWin32Error()).Message}");
     }
 }

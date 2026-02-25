@@ -58,10 +58,31 @@ internal static class NativeInput
     }
 
     public const uint INPUT_KEYBOARD = 1;
+    public const uint KEYEVENTF_SCANCODE = 0x0008;
     public const uint KEYEVENTF_KEYUP = 0x0002;
+    public const uint MAPVK_VK_TO_VSC = 0;
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+    /// <summary>
+    /// Creates a KEYBDINPUT that sends both the VK code and the hardware scan code.
+    /// Games/DirectInput apps read the scan code; normal apps read the VK code.
+    /// </summary>
+    private static KEYBDINPUT MakeKeyInput(ushort vkCode, uint flags)
+    {
+        return new KEYBDINPUT
+        {
+            wVk = vkCode,
+            wScan = (ushort)MapVirtualKey(vkCode, MAPVK_VK_TO_VSC),
+            dwFlags = flags | KEYEVENTF_SCANCODE,
+            time = 0,
+            dwExtraInfo = IntPtr.Zero,
+        };
+    }
 
     /// <summary>
     /// Sends a key-down followed by key-up for the given virtual-key code.
@@ -70,15 +91,11 @@ internal static class NativeInput
     {
         var inputs = new INPUT[2];
 
-        // Key down
         inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].union.ki.wVk = vkCode;
-        inputs[0].union.ki.dwFlags = 0;
+        inputs[0].union.ki = MakeKeyInput(vkCode, 0);
 
-        // Key up
         inputs[1].type = INPUT_KEYBOARD;
-        inputs[1].union.ki.wVk = vkCode;
-        inputs[1].union.ki.dwFlags = KEYEVENTF_KEYUP;
+        inputs[1].union.ki = MakeKeyInput(vkCode, KEYEVENTF_KEYUP);
 
         uint sent = SendInput(2, inputs, Marshal.SizeOf<INPUT>());
         if (sent != 2)
@@ -86,14 +103,13 @@ internal static class NativeInput
     }
 
     /// <summary>
-    /// Sends key-down for the given virtual-key code (used for modifier keys).
+    /// Sends key-down for the given virtual-key code (used for modifier keys and hold).
     /// </summary>
     public static void SendKeyDown(ushort vkCode)
     {
         var inputs = new INPUT[1];
         inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].union.ki.wVk = vkCode;
-        inputs[0].union.ki.dwFlags = 0;
+        inputs[0].union.ki = MakeKeyInput(vkCode, 0);
 
         uint sent = SendInput(1, inputs, Marshal.SizeOf<INPUT>());
         if (sent != 1)
@@ -101,14 +117,13 @@ internal static class NativeInput
     }
 
     /// <summary>
-    /// Sends key-up for the given virtual-key code (used for modifier keys).
+    /// Sends key-up for the given virtual-key code (used for modifier keys and hold).
     /// </summary>
     public static void SendKeyUp(ushort vkCode)
     {
         var inputs = new INPUT[1];
         inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].union.ki.wVk = vkCode;
-        inputs[0].union.ki.dwFlags = KEYEVENTF_KEYUP;
+        inputs[0].union.ki = MakeKeyInput(vkCode, KEYEVENTF_KEYUP);
 
         uint sent = SendInput(1, inputs, Marshal.SizeOf<INPUT>());
         if (sent != 1)

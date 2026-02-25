@@ -1,0 +1,20 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.nupkg
+project.lock.json
+
+## Visual Studio
+.vs/
+*.rsuser
+
+## Rider
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db

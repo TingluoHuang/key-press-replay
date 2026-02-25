@@ -27,16 +27,16 @@ public static class KeyMapper
         ["F5"]  = 0x74, ["F6"]  = 0x75, ["F7"]  = 0x76, ["F8"]  = 0x77,
         ["F9"]  = 0x78, ["F10"] = 0x79, ["F11"] = 0x7A, ["F12"] = 0x7B,
 
-        // Modifiers
-        ["Ctrl"]    = 0xA2, // VK_LCONTROL
-        ["LCtrl"]   = 0xA2,
-        ["RCtrl"]   = 0xA3,
-        ["Alt"]     = 0xA4, // VK_LMENU
-        ["LAlt"]    = 0xA4,
-        ["RAlt"]    = 0xA5,
-        ["Shift"]   = 0xA0, // VK_LSHIFT
-        ["LShift"]  = 0xA0,
-        ["RShift"]  = 0xA1,
+        // Modifiers (use generic VK codes — games often only respond to these)
+        ["Ctrl"]    = 0x11, // VK_CONTROL
+        ["LCtrl"]   = 0xA2, // VK_LCONTROL
+        ["RCtrl"]   = 0xA3, // VK_RCONTROL
+        ["Alt"]     = 0x12, // VK_MENU
+        ["LAlt"]    = 0xA4, // VK_LMENU
+        ["RAlt"]    = 0xA5, // VK_RMENU
+        ["Shift"]   = 0x10, // VK_SHIFT
+        ["LShift"]  = 0xA0, // VK_LSHIFT
+        ["RShift"]  = 0xA1, // VK_RSHIFT
         ["Win"]     = 0x5B, // VK_LWIN
         ["LWin"]    = 0x5B,
         ["RWin"]    = 0x5C,

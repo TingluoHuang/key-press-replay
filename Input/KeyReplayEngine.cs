@@ -46,6 +46,14 @@ internal sealed class KeyReplayEngine
         Console.WriteLine("\nDone.");
     }
 
+    // Minimum key hold time in ms — games need the key held briefly to register the press.
+    // Matches the music-player's proven value.
+    private const int MinKeyHoldMs = 30;
+
+    // Delay in ms after pressing a modifier before pressing the base key.
+    // Gives the game time to register the modifier state.
+    private const int ModifierSettleMs = 15;
+
     private static void SendKey(string keyExpression, int holdMs)
     {
         var (modifiers, mainKey) = KeyMapper.Parse(keyExpression);
@@ -54,12 +62,16 @@ internal sealed class KeyReplayEngine
         foreach (var mod in modifiers)
             NativeInput.SendKeyDown(mod);
 
+        // Let game register modifier state before pressing the base key
+        if (modifiers.Length > 0)
+            Thread.Sleep(ModifierSettleMs);
+
         // Press the main key down
         NativeInput.SendKeyDown(mainKey);
 
-        // Hold for the specified duration
-        if (holdMs > 0)
-            Thread.Sleep(holdMs);
+        // Hold for the specified duration (minimum 30ms for game to register)
+        int effectiveHold = Math.Max(holdMs, MinKeyHoldMs);
+        Thread.Sleep(effectiveHold);
 
         // Release the main key
         NativeInput.SendKeyUp(mainKey);
